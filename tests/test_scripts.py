@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from typing import Optional
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
@@ -25,8 +26,8 @@ def write_workspace(
     root: Path,
     requirements: list[str],
     tasks: list[dict],
-    evidence: list[dict] | None = None,
-    followups: list[dict] | None = None,
+    evidence: Optional[list[dict]] = None,
+    followups: Optional[list[dict]] = None,
 ) -> Path:
     workdir = root / ".ai-work"
     workdir.mkdir()
@@ -48,6 +49,15 @@ def write_workspace(
 
 
 class ScriptTests(unittest.TestCase):
+    def test_empty_requirement_ledger_is_invalid(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            workdir = write_workspace(Path(temp), [], [])
+            result = run("completion_check.py", "--workdir", str(workdir), "--json")
+            self.assertEqual(result.returncode, 2)
+            report = json.loads(result.stdout)
+            self.assertEqual(report["status"], "INVALID")
+            self.assertTrue(any("no requirements found" in item for item in report["errors"]))
+
     def test_init_does_not_overwrite_without_force(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             first = run("init_workspace.py", "--project-root", temp)
@@ -114,6 +124,68 @@ class ScriptTests(unittest.TestCase):
             report = json.loads(result.stdout)
             self.assertEqual(report["status"], "IN_PROGRESS")
             self.assertEqual(report["requirements"][0]["missing_needs"], ["test"])
+
+    def test_latest_failed_evidence_blocks_complete(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            workdir = write_workspace(
+                Path(temp),
+                ["- [REQ-001] Build feature — needs: test"],
+                [{"task_id": "TASK-001", "title": "Build", "req_ids": ["REQ-001"], "status": "completed"}],
+                [
+                    {
+                        "evidence_id": "EV-001",
+                        "req_ids": ["REQ-001"],
+                        "type": "test",
+                        "status": "pass",
+                        "summary": "Old tests passed",
+                        "command": "pytest -q",
+                    },
+                    {
+                        "evidence_id": "EV-002",
+                        "req_ids": ["REQ-001"],
+                        "type": "test",
+                        "status": "fail",
+                        "summary": "Latest tests failed",
+                        "command": "pytest -q",
+                    },
+                ],
+            )
+            result = run("completion_check.py", "--workdir", str(workdir), "--json")
+            self.assertEqual(result.returncode, 2)
+            report = json.loads(result.stdout)
+            self.assertEqual(report["status"], "IN_PROGRESS")
+            self.assertEqual(report["requirements"][0]["missing_needs"], ["test"])
+
+    def test_latest_pass_after_failure_allows_complete(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            workdir = write_workspace(
+                Path(temp),
+                ["- [REQ-001] Build feature — needs: test"],
+                [{"task_id": "TASK-001", "title": "Build", "req_ids": ["REQ-001"], "status": "completed"}],
+                [
+                    {
+                        "evidence_id": "EV-001",
+                        "req_ids": ["REQ-001"],
+                        "type": "test",
+                        "status": "fail",
+                        "summary": "Old tests failed",
+                        "command": "pytest -q",
+                    },
+                    {
+                        "evidence_id": "EV-002",
+                        "req_ids": ["REQ-001"],
+                        "type": "test",
+                        "status": "pass",
+                        "summary": "Latest tests passed",
+                        "command": "pytest -q",
+                    },
+                ],
+            )
+            result = run("completion_check.py", "--workdir", str(workdir), "--json")
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            report = json.loads(result.stdout)
+            self.assertEqual(report["status"], "COMPLETE")
+            self.assertEqual(report["requirements"][0]["evidence_ids"], ["EV-002"])
 
     def test_deferred_followup_closes_with_exception(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

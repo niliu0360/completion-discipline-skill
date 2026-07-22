@@ -15,7 +15,11 @@ OPEN = {"pending", "in_progress"}
 
 
 def _passing_evidence(evidence: list[dict[str, Any]], need: str) -> list[dict[str, Any]]:
-    return [item for item in evidence if item.get("type") == need and item.get("status") == "pass"]
+    matching = [item for item in evidence if item.get("type") == need]
+    if not matching:
+        return []
+    latest = matching[-1]
+    return [latest] if latest.get("status") == "pass" else []
 
 
 def classify_requirement(
@@ -74,7 +78,11 @@ def classify_requirement(
         "reasons": reasons,
         "missing_needs": missing_needs,
         "task_ids": [task.get("task_id") for task in tasks],
-        "evidence_ids": [item.get("evidence_id") for item in evidence if item.get("status") == "pass"],
+        "evidence_ids": [
+            item.get("evidence_id")
+            for need in req.needs
+            for item in _passing_evidence(evidence, need)
+        ] if req.needs != ("(none)",) else [],
         "followup_ids": [item.get("followup_id") for item in followups],
     }
 

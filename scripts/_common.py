@@ -134,7 +134,7 @@ def _parse_requirements(path: Path, errors: list[str], warnings: list[str]) -> d
     if not saw_requirement_section:
         errors.append(f"missing '## Requirements' section in {path}")
     elif not requirements:
-        warnings.append(f"no requirements found in {path}")
+        errors.append(f"no requirements found in {path}")
     return requirements
 
 

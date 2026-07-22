@@ -19,6 +19,10 @@
 - `IN_PROGRESS`：至少存在一个 `in_progress` 或 `missing`；
 - `INVALID`：输入格式错误、ID 重复或引用未知 REQ。
 
+`## Requirements` 存在但没有任何有效 REQ 时同样是 `INVALID`，不得把空台账解释为“没有未完成项”。
+
+同一 REQ、同一 `evidence type` 以 `evidence.jsonl` 文件顺序中的最后一条记录为准。后续 `fail` 会覆盖旧 `pass`；只有最新记录为 `pass` 时，该类型的证据需求才算满足。
+
 ## 退出码
 
 | 退出码 | 含义 |
