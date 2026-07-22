@@ -6,7 +6,7 @@ python3 "$ROOT/scripts/reconcile_requirements.py" --workdir "$ROOT/examples/basi
 python3 "$ROOT/scripts/completion_check.py" --workdir "$ROOT/examples/basic/.ai-work"
 
 for forbidden in 'CLAUDE_PLUGIN_ROOT' '/home/' '.claude-plugin/' 'hooks/hooks.json'; do
-  if grep -R -n -F --exclude='run_all.sh' "$forbidden" "$ROOT"; then
+  if grep -R -n -F --exclude='run_all.sh' --exclude-dir='.git' --exclude-dir='__pycache__' "$forbidden" "$ROOT"; then
     echo "forbidden private/plugin residue found: $forbidden" >&2
     exit 1
   fi
