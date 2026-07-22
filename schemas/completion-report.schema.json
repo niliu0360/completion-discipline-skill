@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/completion-discipline/completion-report.schema.json",
+  "title": "Completion Discipline Report",
+  "type": "object",
+  "required": ["version", "generated_at", "status", "summary", "requirements", "errors", "warnings"],
+  "properties": {
+    "version": {"const": "0.1.0"},
+    "generated_at": {"type": "string"},
+    "status": {"enum": ["COMPLETE", "CLOSED_WITH_EXCEPTIONS", "IN_PROGRESS", "INVALID"]},
+    "summary": {"type": "object"},
+    "requirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["req_id", "description", "needs", "state", "reasons"],
+        "properties": {
+          "req_id": {"type": "string", "pattern": "^REQ-[0-9]{3,}$"},
+          "description": {"type": "string"},
+          "needs": {"type": "array", "items": {"type": "string"}},
+          "state": {"enum": ["completed", "deferred", "rejected", "in_progress", "missing"]},
+          "reasons": {"type": "array", "items": {"type": "string"}},
+          "missing_needs": {"type": "array", "items": {"type": "string"}},
+          "task_ids": {"type": "array", "items": {"type": "string"}},
+          "evidence_ids": {"type": "array", "items": {"type": "string"}},
+          "followup_ids": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "errors": {"type": "array", "items": {"type": "string"}},
+    "warnings": {"type": "array", "items": {"type": "string"}}
+  }
+}

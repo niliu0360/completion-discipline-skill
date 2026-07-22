@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/completion-discipline/task-queue.schema.json",
+  "title": "Completion Discipline Task Queue",
+  "type": "object",
+  "required": ["version", "tasks"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {"const": "0.1.0"},
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["task_id", "title", "req_ids", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "task_id": {"type": "string", "pattern": "^TASK-[0-9]{3,}$"},
+          "title": {"type": "string", "minLength": 1},
+          "req_ids": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"type": "string", "pattern": "^REQ-[0-9]{3,}$"}
+          },
+          "status": {
+            "enum": ["pending", "in_progress", "completed", "deferred", "rejected"]
+          },
+          "reason": {"type": "string"},
+          "next_action": {"type": "string"},
+          "disclosed_to_user": {"type": "boolean"}
+        }
+      }
+    }
+  }
+}

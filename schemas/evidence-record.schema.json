@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/completion-discipline/evidence-record.schema.json",
+  "title": "Completion Discipline Evidence Record",
+  "type": "object",
+  "required": ["evidence_id", "req_ids", "type", "status", "summary"],
+  "additionalProperties": false,
+  "properties": {
+    "evidence_id": {"type": "string", "pattern": "^EV-[0-9]{3,}$"},
+    "req_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^REQ-[0-9]{3,}$"}
+    },
+    "type": {"enum": ["test", "review", "db-probe", "real-host-verify", "deploy-probe"]},
+    "status": {"enum": ["pass", "fail"]},
+    "summary": {"type": "string", "minLength": 1},
+    "command": {"type": "string"},
+    "reference": {"type": "string"},
+    "artifact": {"type": "string"}
+  },
+  "anyOf": [
+    {"required": ["command"]},
+    {"required": ["reference"]},
+    {"required": ["artifact"]}
+  ]
+}

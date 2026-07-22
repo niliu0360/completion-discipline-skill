@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/completion-discipline/followup-record.schema.json",
+  "title": "Completion Discipline Followup Record",
+  "type": "object",
+  "required": ["followup_id", "req_ids", "category", "status"],
+  "additionalProperties": false,
+  "properties": {
+    "followup_id": {"type": "string", "pattern": "^FU-[0-9]{3,}$"},
+    "req_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^REQ-[0-9]{3,}$"}
+    },
+    "category": {"enum": ["deferred", "verification", "decision", "other"]},
+    "status": {"enum": ["pending", "in_progress", "completed", "dismissed"]},
+    "reason": {"type": "string"},
+    "next_action": {"type": "string"}
+  }
+}

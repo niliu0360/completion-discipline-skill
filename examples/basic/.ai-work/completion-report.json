@@ -1,0 +1,53 @@
+{
+  "version": "0.1.0",
+  "generated_at": "2026-07-22T09:28:30.799094+00:00",
+  "status": "COMPLETE",
+  "summary": {
+    "total": 2,
+    "completed": 2,
+    "deferred": 0,
+    "rejected": 0,
+    "in_progress": 0,
+    "missing": 0
+  },
+  "requirements": [
+    {
+      "req_id": "REQ-001",
+      "description": "Import a CSV file with the documented columns",
+      "needs": [
+        "test"
+      ],
+      "state": "completed",
+      "reasons": [
+        "all linked tasks completed and declared evidence needs satisfied"
+      ],
+      "missing_needs": [],
+      "task_ids": [
+        "TASK-001"
+      ],
+      "evidence_ids": [
+        "EV-001"
+      ],
+      "followup_ids": []
+    },
+    {
+      "req_id": "REQ-002",
+      "description": "Update the operator guide",
+      "needs": [
+        "(none)"
+      ],
+      "state": "completed",
+      "reasons": [
+        "all linked tasks completed and declared evidence needs satisfied"
+      ],
+      "missing_needs": [],
+      "task_ids": [
+        "TASK-002"
+      ],
+      "evidence_ids": [],
+      "followup_ids": []
+    }
+  ],
+  "errors": [],
+  "warnings": []
+}
