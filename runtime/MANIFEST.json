@@ -1,0 +1,25 @@
+{
+  "generated": true,
+  "profile": "completion-discipline",
+  "profile_version": "0.2.0-beta.1",
+  "control_layer_version": "0.2.0-dev",
+  "source_repository": "niliu0360/ai-engineering-control-layer",
+  "source_commit": "1b29ea5a862d391a308e3c06b7496b4ec473dc74",
+  "build_workflow_commit": "79d31db350730421292efffe99aa2878e5f7387f",
+  "artifact_digest": "sha256:4e031f8a545cadfd0e10b0485f6c78db4bac2f725111ee2719ec7af2a31de11d",
+  "generated_paths": [
+    "scripts/init_workspace.py",
+    "scripts/reconcile_requirements.py",
+    "scripts/completion_check.py",
+    "scripts/append_evidence.py",
+    "scripts/migrate_legacy_workspace.py",
+    "runtime/aicl/",
+    "schemas/",
+    "examples/"
+  ],
+  "distribution_overlays": [
+    "README.md",
+    "CHANGELOG.md",
+    "RELEASE-NOTES.md"
+  ]
+}
