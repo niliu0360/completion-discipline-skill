@@ -202,4 +202,85 @@ def _validate_followups(rows: list[dict[str, Any]], errors: list[str]) -> None:
         if not isinstance(followup_id, str) or not followup_id:
             errors.append(f"{context}: followup_id is required")
         elif followup_id in seen:
-            errors.append(f"dup
+            errors.append(f"duplicate followup_id: {followup_id}")
+        else:
+            seen.add(followup_id)
+        item["req_ids"] = _req_ids(item.get("req_ids"), context, errors)
+        if item.get("category") not in FOLLOWUP_CATEGORIES:
+            errors.append(f"{context}: invalid category {item.get('category')!r}")
+        if item.get("status") not in FOLLOWUP_STATUSES:
+            errors.append(f"{context}: invalid status {item.get('status')!r}")
+        if item.get("category") == "deferred" and item.get("status") in OPEN:
+            if not str(item.get("reason", "")).strip():
+                errors.append(f"{context}: open deferred followup requires reason")
+            if not str(item.get("next_action", "")).strip():
+                errors.append(f"{context}: open deferred followup requires next_action")
+
+
+def linked(rows: list[dict[str, Any]], req_id: str) -> list[dict[str, Any]]:
+    return [item for item in rows if req_id in item.get("req_ids", [])]
+
+
+def latest_passing(rows: list[dict[str, Any]], need: str) -> list[dict[str, Any]]:
+    matching = [item for item in rows if item.get("type") == need]
+    if not matching:
+        return []
+    return [matching[-1]] if matching[-1].get("status") == "pass" else []
+
+
+def classify(req: Requirement, tasks: list[dict[str, Any]], evidence: list[dict[str, Any]], followups: list[dict[str, Any]]) -> dict[str, Any]:
+    reasons: list[str] = []
+    missing: list[str] = []
+    statuses = {item.get("status") for item in tasks}
+    open_followups = [item for item in followups if item.get("status") in OPEN]
+    deferred_followups = [item for item in open_followups if item.get("category") == "deferred"]
+    blocking_followups = [item for item in open_followups if item.get("category") != "deferred"]
+    if statuses & OPEN:
+        reasons.append("linked task is pending or in progress")
+    if blocking_followups:
+        reasons.append("open verification, decision, or other followup remains")
+    if reasons:
+        state = "in_progress"
+    elif deferred_followups or any(item.get("status") == "deferred" for item in tasks):
+        state, reasons = "deferred", ["explicitly deferred with a recorded reason and next action"]
+    elif any(item.get("status") == "rejected" for item in tasks):
+        state, reasons = "rejected", ["explicitly rejected and disclosed to the user"]
+    elif not tasks:
+        state, reasons = "missing", ["no linked task or valid exception"]
+    elif any(item.get("status") != "completed" for item in tasks):
+        state, reasons = "in_progress", ["linked task has no final accounted state"]
+    else:
+        if req.needs != ("(none)",):
+            missing = [need for need in req.needs if not latest_passing(evidence, need)]
+        if missing:
+            state, reasons = "in_progress", [f"missing passing evidence: {', '.join(missing)}"]
+        else:
+            state, reasons = "completed", ["all linked tasks completed and declared evidence needs satisfied"]
+    return {
+        "req_id": req.req_id,
+        "description": req.statement,
+        "needs": list(req.needs),
+        "state": state,
+        "reasons": reasons,
+        "missing_needs": missing,
+        "task_ids": [item.get("task_id") for item in tasks],
+        "evidence_ids": [item.get("evidence_id") for need in req.needs for item in latest_passing(evidence, need)] if req.needs != ("(none)",) else [],
+        "followup_ids": [item.get("followup_id") for item in followups],
+    }
+
+
+def snapshot(bundle: Bundle) -> dict[str, Any]:
+    rows = [
+        classify(req, linked(bundle.tasks, req.req_id), linked(bundle.evidence, req.req_id), linked(bundle.followups, req.req_id))
+        for req in bundle.requirements.values()
+    ]
+    counts = {key: 0 for key in ("completed", "deferred", "rejected", "in_progress", "missing")}
+    for item in rows:
+        counts[item["state"]] += 1
+    if counts["in_progress"] or counts["missing"]:
+        status = "IN_PROGRESS"
+    elif counts["deferred"] or counts["rejected"]:
+        status = "CLOSED_WITH_EXCEPTIONS"
+    else:
+        status = "COMPLETE"
+    return {"status": status, "summary": {"total": len(rows), **counts}, "requirements": rows}
