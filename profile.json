@@ -1,0 +1,15 @@
+{
+  "profile_id": "completion-discipline",
+  "profile_version": "0.2.0-beta.1",
+  "control_record_schema_version": "0.2.0",
+  "distribution_mode": "self-contained",
+  "canonical_state": ".ai-control/control-record.json",
+  "legacy_import": ".ai-work",
+  "commands": {
+    "init": "scripts/init_workspace.py",
+    "reconcile": "scripts/reconcile_requirements.py",
+    "completion_check": "scripts/completion_check.py",
+    "append_evidence": "scripts/append_evidence.py",
+    "migrate_legacy": "scripts/migrate_legacy_workspace.py"
+  }
+}
