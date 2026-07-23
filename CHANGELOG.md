@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.0-beta.1 — 2026-07-24
+
+- 新任务切换到统一的 `.ai-control/control-record.json`。
+- 使用 REQ、ACC、INV、TASK、EV 和 ACT 统一完成对账。
+- 完成状态改由 AI Engineering Control Layer 共享 Runtime 计算。
+- Evidence Ledger 改为追加式记录，并使用显式 `supersedes` 关系。
+- 有效 PASS 与 FAIL 冲突时保守判定为未完成。
+- 保留原有三个命令名作为轻量兼容包装。
+- 增加 Evidence 追加和旧 `.ai-work` 迁移入口。
+- Runtime、Schema、示例和 Manifest 由 Control Layer 确定性构建。
+- `COMPLETE` 不再被表述为合并、推送或发布授权。
+
 ## 0.1.0 — 2026-07-22
 
 - 将项目重构为单一入口的 `completion-discipline` Skill。

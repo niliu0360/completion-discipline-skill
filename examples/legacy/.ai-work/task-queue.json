@@ -1,0 +1,23 @@
+{
+  "version": "0.1.0",
+  "tasks": [
+    {
+      "task_id": "TASK-001",
+      "title": "Implement CSV import",
+      "req_ids": ["REQ-001"],
+      "status": "completed",
+      "reason": "",
+      "next_action": "",
+      "disclosed_to_user": false
+    },
+    {
+      "task_id": "TASK-002",
+      "title": "Update operator guide",
+      "req_ids": ["REQ-002"],
+      "status": "completed",
+      "reason": "",
+      "next_action": "",
+      "disclosed_to_user": false
+    }
+  ]
+}

@@ -1,82 +1,102 @@
 #!/usr/bin/env python3
-"""Initialize project-local completion-discipline files."""
-
 from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
-VERSION = "0.1.0"
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "runtime"))
 
-SESSION_TEMPLATE = """# Session Goal
+from aicl.completion_profile import EVIDENCE_CATEGORIES, new_record  # noqa: E402
+from aicl.record_io import atomic_write_json  # noqa: E402
 
-## Source
-
-{source}
-
-## Requirements
-
-- [REQ-001] Replace this placeholder with the first requirement — needs: test
-
-## Open decisions
-
-- None.
-
-## Constraints
-
-- None.
-"""
-
-TASK_TEMPLATE = {
-    "version": VERSION,
-    "tasks": [
-        {
-            "task_id": "TASK-001",
-            "title": "Replace this placeholder with an implementation task",
-            "req_ids": ["REQ-001"],
-            "status": "pending",
-            "reason": "",
-            "next_action": "",
-            "disclosed_to_user": False,
-        }
-    ],
-}
-
-
-def write_file(path: Path, content: str, force: bool) -> str:
-    if path.exists() and not force:
-        return "kept"
-    path.write_text(content, encoding="utf-8")
-    return "written"
+VERSION = "0.2.0-beta.1"
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--project-root", default=".", help="Target project root (default: current directory)")
-    parser.add_argument("--workdir-name", default=".ai-work", help="Project-local work directory name")
-    parser.add_argument("--source", default="User request or supplied source material", help="Source text for session-goal.md")
-    parser.add_argument("--force", action="store_true", help="Overwrite existing files")
+    parser = argparse.ArgumentParser(
+        description="Initialize a native Completion Discipline Control Record."
+    )
+    parser.add_argument("--project-root", default=".")
+    parser.add_argument(
+        "--record-path",
+        default=".ai-control/control-record.json",
+        help="Path relative to project root unless absolute",
+    )
+    parser.add_argument(
+        "--source",
+        default="User request or supplied source material",
+    )
+    parser.add_argument("--title", default="Completion Discipline task")
+    parser.add_argument(
+        "--objective",
+        default="Complete every recorded requirement without silent omission.",
+    )
+    parser.add_argument(
+        "--requirement",
+        default="Replace this placeholder with the first requirement",
+    )
+    parser.add_argument(
+        "--acceptance",
+        default="Replace this placeholder with an independently verifiable outcome",
+    )
+    parser.add_argument(
+        "--evidence",
+        choices=["none", *EVIDENCE_CATEGORIES],
+        default="automated_test",
+    )
+    parser.add_argument(
+        "--criticality",
+        choices=["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+        default="MEDIUM",
+    )
+    parser.add_argument("--scope", default="MODULE:task-scope")
+    parser.add_argument("--repository", default="unknown/repository")
+    parser.add_argument("--base-ref", default="main")
+    parser.add_argument("--record-id", default="AICR-completion-task")
+    parser.add_argument("--contract-id", default="ACON-completion-task")
+    parser.add_argument("--risk-id", default="RPA-completion-task")
+    parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
 
-    root = Path(args.project_root).expanduser().resolve()
-    workdir = root / args.workdir_name
-    workdir.mkdir(parents=True, exist_ok=True)
+    project_root = Path(args.project_root).expanduser().resolve()
+    record_path = Path(args.record_path).expanduser()
+    if not record_path.is_absolute():
+        record_path = project_root / record_path
+    if record_path.exists() and not args.force:
+        raise FileExistsError(
+            f"{record_path} already exists; use --force to replace it"
+        )
 
-    results = {
-        "session-goal.md": write_file(workdir / "session-goal.md", SESSION_TEMPLATE.format(source=args.source), args.force),
-        "task-queue.json": write_file(
-            workdir / "task-queue.json",
-            json.dumps(TASK_TEMPLATE, ensure_ascii=False, indent=2) + "\n",
-            args.force,
-        ),
-        "evidence.jsonl": write_file(workdir / "evidence.jsonl", "", args.force),
-        "followups.jsonl": write_file(workdir / "followups.jsonl", "", args.force),
-    }
-
-    print(f"completion-discipline {VERSION}: initialized {workdir}")
-    for name, status in results.items():
-        print(f"- {status}: {name}")
+    record = new_record(
+        record_id=args.record_id,
+        contract_id=args.contract_id,
+        risk_id=args.risk_id,
+        title=args.title,
+        objective=args.objective,
+        requirement=args.requirement,
+        acceptance=args.acceptance,
+        source_ref=args.source,
+        repository=args.repository,
+        base_ref=args.base_ref,
+        scope=args.scope,
+        criticality=args.criticality,
+        evidence_category=args.evidence,
+    )
+    atomic_write_json(record_path, record)
+    print(
+        json.dumps(
+            {
+                "version": VERSION,
+                "created": str(record_path),
+                "record_id": args.record_id,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
     return 0
 
 
